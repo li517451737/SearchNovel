@@ -9,7 +9,7 @@ using System.Collections;
 using System.Configuration;
 using System;
 
-namespace SystemDAO
+namespace SearchNovel.Tool.DBHelper
 {
     /// <summary>
     /// 数据库的通用访问代码 苏飞修改

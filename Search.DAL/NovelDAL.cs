@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SearchNovel.BLL
+namespace Search.DAL
 {
-    public class Class1
+    public class NovelDAL
     {
+
     }
 }

@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A04BA96C-4FAE-4055-8818-C4881D609FFA}</ProjectGuid>
+    <ProjectGuid>{4F8AD180-940C-47C4-8043-C52F02BBD368}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SearchNovel.BLL</RootNamespace>
-    <AssemblyName>SearchNovel.BLL</AssemblyName>
+    <RootNamespace>SearchNovel.UI.Core</RootNamespace>
+    <AssemblyName>SearchNovel.UI.Core</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,17 +40,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Search.DAL\Search.DAL.csproj">
-      <Project>{02f8f398-f93b-4d28-a5c9-6e7dc89faed3}</Project>
-      <Name>Search.DAL</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SearchNovel.Model\SearchNovel.Model.csproj">
-      <Project>{38d84ea2-07c9-40be-a882-41d56b06d6f4}</Project>
-      <Name>SearchNovel.Model</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

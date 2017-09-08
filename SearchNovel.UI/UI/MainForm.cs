@@ -10,11 +10,20 @@ using System.Windows.Forms;
 
 namespace SearchNovel.UI
 {
-    public partial class Form1 : Form
+    public partial class MainForm : BaseForm
     {
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
+        }
+        /// <summary>
+        /// 打开采集窗口
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnShow_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
