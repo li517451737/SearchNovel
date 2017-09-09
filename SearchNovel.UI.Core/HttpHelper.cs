@@ -1,4 +1,6 @@
-﻿using System;
+﻿using HtmlAgilityPack;
+using SearchNovel.Model.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,19 +14,35 @@ namespace SearchNovel.UI.Core
 {
     public class HttpHelper
     {
-        public CookieContainer cookie;
-        public HttpHelper()
+        public static string GetHtml(string url)
         {
-            cookie = new CookieContainer();
+            string html = string.Empty;
+            bool retry = false;
+            using (WebClient client = new WebClient())
+            {
+                client.Headers.Add("User-Agent", "Microsoft Internet Explorer");
+                client.Headers.Add("Host", "www.b5200.org");
+                var myProxy = new WebProxy();
+                myProxy.Credentials = CredentialCache.DefaultCredentials;
+                myProxy.Address = new Uri(url);
+                client.Proxy = myProxy;
+                while (!retry)
+                {
+                    try
+                    {
+                        html = client.DownloadString(url);
+                        retry = true;
+                    }
+                    catch
+                    {
+                        retry = false;
+                    }
+                }
+            }
+            return html;
         }
 
-        public static string GetHtml(string Url)
-        {
-            WebClient client = new WebClient();
-            return client.DownloadString(Url);
-        }
-
-        public string Get_Request(
+        public static string Get_Request(
             string strUrl,
             CookieContainer _cookie = null,
             string strHost = "",
@@ -37,7 +55,7 @@ namespace SearchNovel.UI.Core
             string strContentType = "",
             string strAccept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             string strUserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36",
-            bool blnAllowAutoRedirect = true,
+            bool blnAllowAutoRedirect = false,
             int intTimeout = 1000 * 30)
         {
             HttpWebRequest request;
@@ -101,167 +119,30 @@ namespace SearchNovel.UI.Core
         {
             return true; //总是接受     
         }
-
-        public string POST_Request(
-            string strUrl,
-            string postDataStr,
-            CookieContainer _cookie = null,
-            string strHost = "",
-            string strRefer = "",
-            string strOrigin = "",
-            bool blnHttps = false,
-            Dictionary<string, string> lstHeads = null,
-            bool blnKeepAlive = false,
-            string strEncoding = "utf-8",
-            string strContentType = "",
-            string strAccept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            string strUserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36",
-            bool blnAllowAutoRedirect = true,
-            int intTimeout = 1000 * 30)
+        /// <summary>
+        /// 获取小说基本信息
+        /// </summary>
+        /// <param name="href"></param>
+        /// <param name="novel"></param>
+        /// <returns></returns>
+        public static HtmlNodeCollection GetNovelHtml(string href, ref Novel novel)
         {
-            HttpWebRequest request;
-            HttpWebResponse response;
-            request = (HttpWebRequest)WebRequest.Create(strUrl);
-            if (blnHttps)
-            {
-                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(CheckValidationResult);
-                request.ProtocolVersion = HttpVersion.Version10;
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            }
-            request.Accept = strAccept;
-            request.Timeout = intTimeout;
-            request.Method = "POST";
-            request.KeepAlive = blnKeepAlive;
-            request.Host = strHost;
-            request.UserAgent = strUserAgent;
-            request.Proxy = null;
-            //if (!string.IsNullOrEmpty(strCertFile))
-            //{
-            //    X509Certificate cer = X509Certificate.CreateFromCertFile(strCertFile);
-            //    request.ClientCertificates.Add(cer);
-            //}
-            if (_cookie != null)
-            {
-                request.CookieContainer = _cookie;
-            }
-            request.AllowAutoRedirect = blnAllowAutoRedirect;
-            if (!string.IsNullOrEmpty(strContentType))
-            {
-                request.ContentType = strContentType;
-            }
-            if (!string.IsNullOrEmpty(strOrigin))
-            {
-                request.Headers.Add("Origin", strOrigin);
-            }
-            if (!string.IsNullOrEmpty(strRefer))
-            {
-                request.Referer = strRefer;
-            }
-            if (!string.IsNullOrEmpty(strHost))
-            {
-                request.Host = strHost;
-            }
-            if (lstHeads != null && lstHeads.Count > 0)
-            {
-                foreach (var item in lstHeads)
-                {
-                    request.Headers.Add(item.Key, item.Value);
-                }
-            }
-            if (!string.IsNullOrEmpty(postDataStr))
-            {
-                request.ContentLength = postDataStr.Length;
-                Stream myRequestStream = request.GetRequestStream();
-                StreamWriter myStreamWriter = new StreamWriter(myRequestStream);
-                myStreamWriter.Write(postDataStr);
-                myStreamWriter.Close();
-            }
+            var desDoc = new HtmlDocument();
+            string html = GetHtml(href);
+            if (string.IsNullOrEmpty(html))
+                throw new Exception("小说内容为空");
+            desDoc.LoadHtml(html);
+            var mainInfo = desDoc.DocumentNode.SelectSingleNode("//*[@id=\"wrapper\"]/div[5]");
+            novel.Title = mainInfo.SelectSingleNode("//*[@id=\"info\"]/h1").InnerText;
+            novel.Author = mainInfo.SelectSingleNode("//*[@id=\"info\"]/p[1]").InnerText.Replace("作&nbsp;&nbsp;&nbsp;&nbsp;者：", "");
+            novel.LastUpdate = Convert.ToDateTime(mainInfo.SelectSingleNode("//*[@id=\"info\"]/p[3]").InnerText.Replace("最后更新：", ""));
+            novel.Intro = mainInfo.SelectSingleNode("//*[@id=\"intro\"]/p").InnerText;
+            novel.CoverImg = mainInfo.SelectSingleNode("//*[@id=\"fmimg\"]/img")?.Attributes["src"].Value.ToString();
+            novel.SourceUrl = href;
+            novel.NovelState = "完结";
+            var chapters = desDoc.DocumentNode.SelectNodes("//*[@id=\"list\"]/dl/dd/a");
 
-            response = (HttpWebResponse)request.GetResponse();
-            var sr = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding(strEncoding));
-            string strResult = sr.ReadToEnd();
-            sr.Close();
-            request.Abort();
-            response.Close();
-            return strResult;
+            return chapters;
         }
-
-        public string DownloadFile(
-            string strURLAddress,
-            string strPath,
-            CookieContainer _cookie = null,
-            string strHost = "",
-            string strRefer = "",
-            string strOrigin = "",
-            Dictionary<string, string> lstHeads = null,
-            string strAccept = "",
-            string strUserAgent = "")
-        {
-            try
-            {
-                // 设置参数
-                HttpWebRequest request = WebRequest.Create(strURLAddress) as HttpWebRequest;
-                if (!string.IsNullOrEmpty(strAccept))
-                {
-                    request.Accept = strAccept;
-                }
-                if (!string.IsNullOrEmpty(strUserAgent))
-                {
-                    request.UserAgent = strUserAgent;
-                }
-                if (_cookie != null)
-                {
-                    request.CookieContainer = _cookie;
-                }
-                if (!string.IsNullOrEmpty(strOrigin))
-                {
-                    request.Headers.Add("Origin", strOrigin);
-                }
-                if (!string.IsNullOrEmpty(strRefer))
-                {
-                    request.Referer = strRefer;
-                }
-                if (!string.IsNullOrEmpty(strHost))
-                {
-                    request.Host = strHost;
-                }
-                if (lstHeads != null && lstHeads.Count > 0)
-                {
-                    foreach (var item in lstHeads)
-                    {
-                        request.Headers.Add(item.Key, item.Value);
-                    }
-                }
-                //发送请求并获取相应回应数据
-                HttpWebResponse response = request.GetResponse() as HttpWebResponse;
-                string strReceivePath = string.Empty;
-
-                //直到request.GetResponse()程序才开始向目标网页发送Post请求
-                Stream responseStream = response.GetResponseStream();
-                //创建本地文件写入流
-                Stream stream = new FileStream(strPath, FileMode.Create);
-                byte[] bArr = new byte[204800];
-                int size = responseStream.Read(bArr, 0, (int)bArr.Length);
-                while (size > 0)
-                {
-                    stream.Write(bArr, 0, size);
-                    stream.Flush();
-                    size = responseStream.Read(bArr, 0, (int)bArr.Length);
-                }
-                stream.Close();
-                responseStream.Close();
-                return strPath;
-            }
-            catch (Exception)
-            {
-                return "";
-            }
-        }
-
-        public string GetTimerStr()
-        {
-            return Convert.ToInt64((DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds).ToString().ToString();
-        }
-
     }
 }

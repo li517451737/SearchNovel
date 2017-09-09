@@ -52,5 +52,11 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SearchNovel.Model\SearchNovel.Model.csproj">
+      <Project>{38d84ea2-07c9-40be-a882-41d56b06d6f4}</Project>
+      <Name>SearchNovel.Model</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
