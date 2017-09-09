@@ -23,7 +23,10 @@ namespace SearchNovel.UI
         /// <param name="e"></param>
         private void btnShow_Click(object sender, EventArgs e)
         {
-
+            using (FrmCollection frm = new FrmCollection())
+            {
+                frm.ShowDialog();
+            }
         }
     }
 }
